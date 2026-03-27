@@ -11,13 +11,13 @@ namespace SiteLink.Queue;
 
 public class MainClass : Plugin<Config>
 {
-    public override string Name { get; } = "SiteLink.Queue";
+    public override string Name { get; } = "Queue";
 
     public override string Description { get; } = "Adds queue system for servers.";
 
     public override string Author { get; } = "Killers0992";
 
-    public override Version Version { get; } = new Version(1, 0, 0);
+    public override Version Version { get; } = new Version(1, 0, 1);
 
     public override Version ApiVersion { get; } = new Version(SiteLinkAPI.ApiVersionText);
 
@@ -29,7 +29,7 @@ public class MainClass : Plugin<Config>
         EventManager.Client.JoinedServer += OnJoinedServer;
     }
 
-    private void OnJoinedServer(ClientJoinedServerEvent ev)
+    private void OnJoinedServer(SessionJoinedServerEvent ev)
     {
         if (!Config.ServersWithQueue.Contains(ev.Server.Name))
             return;
@@ -37,10 +37,10 @@ public class MainClass : Plugin<Config>
         if (!QueueService.ServerQueues.TryGetValue(ev.Server, out List<string> queues))
             return;
 
-        if (!queues.Contains(ev.Client.PreAuth.UserId))
+        if (!queues.Contains(ev.Session.UserId))
             return;
 
-        queues.Remove(ev.Client.PreAuth.UserId);
+        queues.Remove(ev.Session.UserId);
     }
 
     private void OnConnectionResponse(ClientConnectionResponseEvent ev)
@@ -51,14 +51,14 @@ public class MainClass : Plugin<Config>
         switch (ev.Response)
         {
             case ServerIsFullResponse _:
-                if (ev.Client.World is QueueWorld world)
+                if (ev.Connection.Session.World is QueueWorld world)
                 {
                     world.ConnectingTo = ev.Server;
                 }
                 else
                 {
-                    ev.Client.World = new QueueWorld(ev.Server);
-                    SiteLinkLogger.Info($"{ev.Client.Tag} Added to queue, position '(f=green){QueueService.GetPositionInQueue(ev.Client, ev.Server)}(f=white)' to '(f=green){ev.Server.Name}(f=white)'.");
+                    ev.Connection.Session.World = new QueueWorld(ev.Server);
+                    SiteLinkLogger.Info($"{ev.Connection.Tag} Added to queue, position '(f=green){QueueService.GetPositionInQueue(ev.Connection.Session, ev.Server)}(f=white)' to '(f=green){ev.Server.Name}(f=white)'.");
                 }
                 break;
         }

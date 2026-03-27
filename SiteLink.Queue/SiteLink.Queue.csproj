@@ -29,7 +29,7 @@
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetDir)$(TargetName).dll" Condition="'$(Configuration)' == 'Debug'" DestinationFolder="D:\VS Projects\SiteLink\SiteLink\bin\Debug\net9.0\Plugins" />
+		<Copy SourceFiles="$(TargetDir)$(TargetName).dll" Condition="'$(Configuration)' == 'Debug'" DestinationFolder="D:\VS Projects\SiteLink\SiteLink\bin\Debug\net9.0\win-x64\Plugins" />
 	</Target>
 
 </Project>

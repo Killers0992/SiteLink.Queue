@@ -2,6 +2,7 @@
 using SiteLink.API.Core;
 using SiteLink.API.Misc;
 using SiteLink.API.Networking;
+using SiteLink.API.Networking.Connections;
 using System.Collections.Concurrent;
 
 namespace SiteLink.Queue.Services;
@@ -10,12 +11,12 @@ public class QueueService : BackgroundService
 {
     public static ConcurrentDictionary<Server, List<string>> ServerQueues = new ConcurrentDictionary<Server, List<string>>();
 
-    public static int GetPositionInQueue(Client client, Server server)
+    public static int GetPositionInQueue(Session session, Server server)
     {
         if (!ServerQueues.TryGetValue(server, out List<string> queues))
             return -1;
 
-        return queues.IndexOf(client.PreAuth.UserId);
+        return queues.IndexOf(session.UserId) + 1;
     }
 
     public static int GetQueueLength(Server server)
@@ -26,7 +27,7 @@ public class QueueService : BackgroundService
         return queues.Count;
     }
 
-    public static void AddToQueue(Client client, Server server)
+    public static void AddToQueue(Session session, Server server)
     {
         if (!ServerQueues.TryGetValue(server, out List<string> queues))
         {
@@ -34,18 +35,24 @@ public class QueueService : BackgroundService
             ServerQueues.TryAdd(server, queues);
         }
 
-        if (queues.Contains(client.PreAuth.UserId))
+        if (queues.Contains(session.UserId))
             return;
 
-        queues.Add(client.PreAuth.UserId);
+        queues.Add(session.UserId);
     }
 
-    public static void RemoveFromQueue(Client client, Server server)
+    public static void RemoveFromQueue(Session session, Server server)
     {
         if (!ServerQueues.TryGetValue(server, out List<string> queues))
             return;
 
-        queues.Remove(client.PreAuth.UserId);
+        if (session == null)
+        {
+            SiteLinkLogger.Error($"Failed to remove from queue because session is null!", "Queue");
+            return;
+        }
+
+        queues.Remove(session.UserId);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -57,7 +64,7 @@ public class QueueService : BackgroundService
                 foreach(var queue in ServerQueues)
                 {
                     // If server is still full dont do anything and skip.
-                    if (queue.Key.ClientsCount >= queue.Key.MaxClientsCount)
+                    if (queue.Key.SessionsCount >= queue.Key.MaxSessions)
                         continue;
 
                     // If theres no one in queue then skip.
@@ -67,7 +74,7 @@ public class QueueService : BackgroundService
                     string nextPlayer = queue.Value[0];
 
                     // If returns false then it means client is not connected to proxy anymore.
-                    if (!Client.TryGet(nextPlayer, out Client client))
+                    if (!RemoteConnection.TryGet(nextPlayer, out RemoteConnection client))
                         continue;
 
                     client.Connect(queue.Key, true);

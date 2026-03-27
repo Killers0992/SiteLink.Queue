@@ -1,5 +1,6 @@
 ﻿using PlayerRoles;
 using SiteLink.API.Core;
+using SiteLink.API.Misc;
 using SiteLink.API.Networking;
 using SiteLink.API.Networking.Objects;
 using SiteLink.Queue.Services;
@@ -36,31 +37,31 @@ public class QueueWorld : World
         foreach(var client in GetClientsSnapshot())
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"<color=orange>{ConnectingTo.DisplayName} is full</color>");
+            sb.AppendLine($"<color=orange>{ConnectingTo.DisplayName}</color> <color=white>is full</color>");
             sb.AppendLine("");
             sb.AppendLine($"<color=orange>Position in queue <color=white>{QueueService.GetPositionInQueue(client, ConnectingTo)}</color>/<color=white>{QueueService.GetQueueLength(ConnectingTo)}</color></color>");
 
-            client.SendHint(sb.ToString(), 1.2f);
+            client.Connection?.AsServer.Hint(sb.ToString(), 1.2f);
         }
 
         _delay = DateTime.Now.AddSeconds(1);
     }
 
-    public override void OnLoad(Client client)
+    public override void OnLoad(Session session)
     {
-        QueueService.AddToQueue(client, ConnectingTo);
-        client.SpawnPlayer();
+        QueueService.AddToQueue(session, ConnectingTo);
+        session.SpawnPlayer(new Vector3(0f, -300f, 0f));
     }
 
-    public override void OnUnload(Client client)
+    public override void OnUnload(Session session)
     {
-        QueueService.RemoveFromQueue(null, ConnectingTo);
+        QueueService.RemoveFromQueue(session, ConnectingTo);
     }
 
-    public override void OnObjectsSpawned(Client client)
+    public override void OnObjectsSpawned(Session session)
     {
-        client.SetRole(RoleTypeId.Tutorial);
-        client.SetHealth(100f);
-        client.SetSeed(350);
+        session.Connection.AsServer.Role(session.NetworkId, RoleTypeId.Tutorial);
+        session.Connection.AsServer.Health(session.NetworkId, 100f);
+        session.Connection.AsServer.Seed(350);
     }
 }
