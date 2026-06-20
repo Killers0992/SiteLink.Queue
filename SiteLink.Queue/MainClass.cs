@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Mirror;
 using SiteLink.API;
 using SiteLink.API.Events;
 using SiteLink.API.Events.Args;
 using SiteLink.API.Misc;
+using SiteLink.API.Networking;
 using SiteLink.API.Plugins;
 using SiteLink.API.Structs;
 using SiteLink.Queue.Services;
@@ -11,6 +13,8 @@ namespace SiteLink.Queue;
 
 public class MainClass : Plugin<Config>
 {
+    public static MainClass Instance { get; private set; }
+
     public override string Name { get; } = "Queue";
 
     public override string Description { get; } = "Adds queue system for servers.";
@@ -23,10 +27,39 @@ public class MainClass : Plugin<Config>
 
     public override void OnLoad(IServiceCollection collection)
     {
+        Instance = this;
+
         collection.AddHostedService<QueueService>();
 
         EventManager.Client.ConnectionResponse += OnConnectionResponse;
         EventManager.Client.JoinedServer += OnJoinedServer;
+        EventManager.Listener.ListenerRegistered += OnListenerRegistered;
+
+        foreach (Listener listener in Listener.List)
+            RegisterVoiceHandler(listener);
+    }
+
+    public override void OnUnload()
+    {
+        EventManager.Client.ConnectionResponse -= OnConnectionResponse;
+        EventManager.Client.JoinedServer -= OnJoinedServer;
+        EventManager.Listener.ListenerRegistered -= OnListenerRegistered;
+
+        Instance = null;
+    }
+
+    private void OnListenerRegistered(ListenerRegisteredEvent ev) => RegisterVoiceHandler(ev.Listener);
+
+    private static void RegisterVoiceHandler(Listener listener) =>
+        listener.ClientToServer.Register(NetworkMessages.VoiceMessage, OnVoiceMessage);
+
+    private static InterceptResult OnVoiceMessage(ushort id, NetworkReader reader, ArraySegment<byte> original, Session session)
+    {
+        if (session.World is not QueueWorld world)
+            return InterceptResult.Pass();
+
+        world.TryConnectToAltServer(session);
+        return InterceptResult.Drop();
     }
 
     private void OnJoinedServer(SessionJoinedServerEvent ev)

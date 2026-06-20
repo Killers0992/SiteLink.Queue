@@ -4,7 +4,6 @@ using SiteLink.API.Misc;
 using SiteLink.API.Networking;
 using SiteLink.API.Networking.Objects;
 using SiteLink.Queue.Services;
-using System.Text;
 using UnityEngine;
 
 namespace SiteLink.Queue;
@@ -28,6 +27,7 @@ public class QueueWorld : World
     }
 
     DateTime _delay;
+    private readonly Dictionary<string, DateTime> _altConnectDelays = new();
 
     public override void Update()
     {
@@ -36,15 +36,71 @@ public class QueueWorld : World
 
         foreach (var client in GetClientsSnapshot())
         {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"<color=orange>{ConnectingTo.DisplayName}</color> <color=white>is full</color>");
-            sb.AppendLine("");
-            sb.AppendLine($"<color=orange>Position in queue <color=white>{QueueService.GetPositionInQueue(client, ConnectingTo)}</color>/<color=white>{QueueService.GetQueueLength(ConnectingTo)}</color></color>");
-
-            client.Connection?.AsServer.Hint(sb.ToString(), 1.2f);
+            client.Connection?.AsServer.Hint(BuildQueueText(client), MainClass.Instance.Config.HintDuration);
         }
 
         _delay = DateTime.Now.AddSeconds(1);
+    }
+
+    public void TryConnectToAltServer(Session session)
+    {
+        if (session?.Connection == null)
+            return;
+
+        if (_altConnectDelays.TryGetValue(session.UserId, out DateTime delay) && delay > DateTime.UtcNow)
+            return;
+
+        _altConnectDelays[session.UserId] = DateTime.UtcNow.AddSeconds(1);
+
+        if (!TryGetAltServer(out Server altServer))
+            return;
+
+        session.Connection.Connect(altServer, true);
+    }
+
+    private string BuildQueueText(Session session)
+    {
+        Config config = MainClass.Instance.Config;
+        int position = QueueService.GetPositionInQueue(session, ConnectingTo);
+        int queueLength = QueueService.GetQueueLength(ConnectingTo);
+
+        TryGetAltServer(out Server altServer);
+
+        return config.QueueText
+            .Replace("{queue_server}", ConnectingTo.DisplayName)
+            .Replace("{queue_server_name}", ConnectingTo.Name)
+            .Replace("{queue_position}", position.ToString())
+            .Replace("{queue_position_ordinal}", ToOrdinal(position))
+            .Replace("{queue_length}", queueLength.ToString())
+            .Replace("{alt_server}", altServer?.DisplayName ?? string.Empty)
+            .Replace("{alt_server_name}", altServer?.Name ?? string.Empty)
+            .Replace("{alt_online}", (altServer?.SessionsCount ?? 0).ToString())
+            .Replace("{alt_max}", (altServer?.MaxSessions ?? 0).ToString());
+    }
+
+    private bool TryGetAltServer(out Server server)
+    {
+        server = null;
+
+        if (!MainClass.Instance.Config.AltConnectServers.TryGetValue(ConnectingTo.Name, out string serverName))
+            return false;
+
+        return !string.IsNullOrWhiteSpace(serverName) && Server.TryGetByName(serverName, out server);
+    }
+
+    private static string ToOrdinal(int number)
+    {
+        int lastTwoDigits = Math.Abs(number) % 100;
+        if (lastTwoDigits is >= 11 and <= 13)
+            return $"{number}th";
+
+        return (Math.Abs(number) % 10) switch
+        {
+            1 => $"{number}st",
+            2 => $"{number}nd",
+            3 => $"{number}rd",
+            _ => $"{number}th"
+        };
     }
 
     public override void OnLoad(Session session)
@@ -55,6 +111,7 @@ public class QueueWorld : World
 
     public override void OnUnload(Session session)
     {
+        _altConnectDelays.Remove(session.UserId);
         QueueService.RemoveFromQueue(session, ConnectingTo);
     }
 

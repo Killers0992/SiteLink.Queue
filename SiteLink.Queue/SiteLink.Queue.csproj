@@ -17,6 +17,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Reference Include="Mirror">
+			<HintPath>$(SL_REFERENCES)\Mirror.dll</HintPath>
+		</Reference>
 		<Reference Include="UnityEngine.CoreModule">
 			<HintPath>$(UNITY_REFERENCES)\UnityEngine.CoreModule.dll</HintPath>
 		</Reference>
