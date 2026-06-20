@@ -2,5 +2,5 @@
 
 public class Config
 {
-    public string[] ServersWithQueue { get; set; } = new[] { "default" }; 
+    public string[] ServersWithQueue { get; set; } = new[] { "default" };
 }

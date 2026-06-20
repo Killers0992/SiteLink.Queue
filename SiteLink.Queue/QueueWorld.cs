@@ -34,7 +34,7 @@ public class QueueWorld : World
         if (_delay > DateTime.Now)
             return;
 
-        foreach(var client in GetClientsSnapshot())
+        foreach (var client in GetClientsSnapshot())
         {
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"<color=orange>{ConnectingTo.DisplayName}</color> <color=white>is full</color>");

@@ -61,7 +61,7 @@ public class QueueService : BackgroundService
         {
             try
             {
-                foreach(var queue in ServerQueues)
+                foreach (var queue in ServerQueues)
                 {
                     // If server is still full dont do anything and skip.
                     if (queue.Key.SessionsCount >= queue.Key.MaxSessions)
@@ -82,7 +82,7 @@ public class QueueService : BackgroundService
 
                 await Task.Delay(500);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 SiteLinkLogger.Error(ex, "SiteLink.Queue");
             }
