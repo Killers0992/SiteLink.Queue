@@ -14,7 +14,7 @@ To use **SiteLink.Queue**, you need:
 
 | Dependency | Version |
 |-----------|---------|
-| [SiteLink](https://github.com/Killers0992/SiteLink) | **0.1.0** or newer |
+| [SiteLink](https://github.com/Killers0992/SiteLink) | **2.0.1** or newer |
 
 Ensure SiteLink is installed and functioning before adding this plugin.
 
