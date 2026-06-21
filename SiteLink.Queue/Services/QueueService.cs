@@ -48,7 +48,10 @@ public class QueueService : BackgroundService
 
         if (session == null)
         {
-            SiteLinkLogger.Error($"Failed to remove from queue because session is null!", "Queue");
+            SiteLinkLogger.Error(
+                MainClass.Instance?.Translation.NullSessionLog ??
+                "Failed to remove a player from the queue because the session was null.",
+                "Queue");
             return;
         }
 

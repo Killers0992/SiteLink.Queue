@@ -3,6 +3,7 @@ using SiteLink.API.Core;
 using SiteLink.API.Misc;
 using SiteLink.API.Networking;
 using SiteLink.API.Networking.Objects;
+using SiteLink.API.Translations;
 using SiteLink.Queue.Services;
 using UnityEngine;
 
@@ -60,22 +61,24 @@ public class QueueWorld : World
 
     private string BuildQueueText(Session session)
     {
-        Config config = MainClass.Instance.Config;
         int position = QueueService.GetPositionInQueue(session, ConnectingTo);
         int queueLength = QueueService.GetQueueLength(ConnectingTo);
 
         TryGetAltServer(out Server altServer);
 
-        return config.QueueText
-            .Replace("{queue_server}", ConnectingTo.DisplayName)
-            .Replace("{queue_server_name}", ConnectingTo.Name)
-            .Replace("{queue_position}", position.ToString())
-            .Replace("{queue_position_ordinal}", ToOrdinal(position))
-            .Replace("{queue_length}", queueLength.ToString())
-            .Replace("{alt_server}", altServer?.DisplayName ?? string.Empty)
-            .Replace("{alt_server_name}", altServer?.Name ?? string.Empty)
-            .Replace("{alt_online}", (altServer?.SessionsCount ?? 0).ToString())
-            .Replace("{alt_max}", (altServer?.MaxSessions ?? 0).ToString());
+        return MainClass.Instance.Translate(
+            session,
+            translations => translations.QueueText,
+            TranslationContext.For(session, ConnectingTo, MainClass.Instance)
+                .With("queue_server", ConnectingTo.DisplayName)
+                .With("queue_server_name", ConnectingTo.Name)
+                .With("queue_position", position)
+                .With("queue_position_ordinal", ToOrdinal(position))
+                .With("queue_length", queueLength)
+                .With("alt_server", altServer?.DisplayName ?? string.Empty)
+                .With("alt_server_name", altServer?.Name ?? string.Empty)
+                .With("alt_online", altServer?.SessionsCount ?? 0)
+                .With("alt_max", altServer?.MaxSessions ?? 0));
     }
 
     private bool TryGetAltServer(out Server server)
