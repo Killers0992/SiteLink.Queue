@@ -19,9 +19,9 @@ public sealed class Translations
 
     [Description("Placeholders: {server}, {server_name}, {queue_position}")]
     public string AddedToQueueLog { get; set; } =
-        "Added {user_id} to the {server_name} queue at position {queue_position}.";
+        "Added (f=cyan){user_id}(f=white) to the (f=yellow){server_name}(f=white) queue at position (f=green){queue_position}(f=white).";
 
     [Description("No placeholders.")]
     public string NullSessionLog { get; set; } =
-        "Failed to remove a player from the queue because the session was null.";
+        "(f=red)Failed to remove a player from the queue because the session was null.(f=white)";
 }

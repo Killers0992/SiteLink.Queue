@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Translations\language_en.yml">
+	  <None Update="Translations\language_en.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
@@ -42,7 +42,7 @@
 	</Target>
 
 	<ItemGroup>
-		<QueueTranslationFiles Include="Translations\*.yml" />
+		<QueueTranslationFiles Include="Translations\*.json" />
 	</ItemGroup>
 
 </Project>
