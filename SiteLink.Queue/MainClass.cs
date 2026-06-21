@@ -22,7 +22,7 @@ public class MainClass : Plugin<Config, Translations>
 
     public override string Author { get; } = "Killers0992";
 
-    public override Version Version { get; } = new Version(1, 0, 1);
+    public override Version Version { get; } = new Version(1, 1, 0);
 
     public override Version ApiVersion { get; } = new Version(SiteLinkAPI.ApiVersionText);
     public override string Repository => "Killers0992/SiteLink.Queue";
